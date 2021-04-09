@@ -15,10 +15,13 @@ This repository will hold all the code used for our project.
 ## Instructions
 
 Download both files, open the arduinoEEG in Arduino IDE. Upload the sketch to your assembled arduino.
-Next, download python and install the required libraries:
+
+Next, download and install python 2 or 3 (https://www.python.org/) and open a console window.
+Install the required libraries:
 
 > python pip install pyqt5 pyqtgraph serial numpy
 
 then run the code:
 
 > python GUIandPlot.py
+
