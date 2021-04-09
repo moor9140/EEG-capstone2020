@@ -11,3 +11,14 @@ the python folder will hold all the computer side code. This will hold the GUI a
 
 To develop code to interface our headset prototype to a computer. Includes developing a GUI and potentially a game.
 This repository will hold all the code used for our project.
+
+## Instructions
+
+Download both files, open the arduinoEEG in Arduino IDE. Upload the sketch to your assembled arduino.
+Next, download python and install the required libraries:
+
+'''python pip install pyqt5 pyqtgraph serial numpy'''
+
+then run the code:
+
+'''python GUIandPlot.py'''
