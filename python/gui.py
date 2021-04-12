@@ -11,9 +11,9 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
                              QSizePolicy, QSlider, QSpinBox, QStyleFactory,
                              QTableWidget, QTabWidget, QTextEdit,
                              QVBoxLayout, QWidget)
+from numpy import linspace
+import EEG
 import serial
-import serial.tools.list_ports
-from numpy import *
 
 # TO DO:
 # inability to run if no serial connection
@@ -23,15 +23,10 @@ from numpy import *
 # pause and stop plotting
 
 # class definitions
-
-
 # Set up plot window
 class MainWindow(QtGui.QMainWindow):
-    baud = 9600
-    port = "/dev/ttyACM0"
     windowWidth = 500
     nPlots = 8
-    ser = None
     curves = []
     Xm = [[], [], [], [], [], [], [], []]  # there's gotta be a better way...
     ptr = -windowWidth
@@ -42,6 +37,9 @@ class MainWindow(QtGui.QMainWindow):
         self.central_widget = QtGui.QStackedWidget()
         self.setCentralWidget(self.central_widget)
         self.login_widget = LoginWidget(self)
+        self.s = EEG.SerialGet(
+                baud=int(self.login_widget.baudcombo.currentText()),
+                port=self.login_widget.portcombo.currentText())
         self.login_widget.button.clicked.connect(self.plotter)
         self.central_widget.addWidget(self.login_widget)
         self.curve = self.login_widget.plot.getPlotItem()
@@ -50,32 +48,23 @@ class MainWindow(QtGui.QMainWindow):
     def plotter(self):
         '''runs once when button clicked. Sets up the plot'''
         self.curve.setWindowTitle("ok")
-        self.baud = int(self.login_widget.baudcombo.currentText())
-        self.port = self.login_widget.portcombo.currentText()
-        self.ser = serial.Serial(self.port, self.baud)
-        for i in range(self.nPlots):
-            c = pg.PlotCurveItem(pen=(i, self.nPlots*1.3))
+        for i in range(self.s.nPlots):
+            c = pg.PlotCurveItem(pen=(i, self.s.nPlots*1.3))
             self.curve.addItem(c)
             self.Xm[i] = linspace(0, 0, self.windowWidth)
             self.curves.append(c)
-        for _ in range(10):
-            self.ser.readline()
         self.timer.timeout.connect(self.updater)
         self.timer.start(0)
 
-
     def updater(self):
         '''Updates plot visuals and data.'''
-        self.ser.flush()
-        value = self.ser.readline()
-        value = value.decode("ascii").rstrip()
-        ypr = value.split(",")
-        print(ypr)            # show outputs of arduino to console
-        self.nPlots = len(ypr)
+        self.s.readval()
+        print(self.s.ypr)            # show outputs of arduino to console
         self.ptr += 1
-        for i in range(self.nPlots):
+        for i in range(self.s.nPlots):
             self.Xm[i][:-1] = self.Xm[i][1:]
-            self.Xm[i][-1] = int(ypr[i])
+            # self.Xm[i][-1] = int(self.s.ypr[i])
+            self.Xm[i][-1] = self.s.ypr[i]
             self.curves[i].setData(self.Xm[i])
             self.curves[i].setPos(self.ptr, i*200)
         QtGui.QApplication.processEvents()
@@ -92,7 +81,7 @@ class LoginWidget(QtGui.QWidget):
         self.baudcombo.addItems(["9600", "115200"])
         buttonlayout.addWidget(self.baudcombo)
 
-        self.portcombo = QtGui.QComboBox() # port names
+        self.portcombo = QtGui.QComboBox()  # port names
         comports = serial.tools.list_ports.comports()
         comlist = []
         for item in comports:
@@ -101,10 +90,10 @@ class LoginWidget(QtGui.QWidget):
         self.portcombo.addItems(comlist)
         buttonlayout.addWidget(self.portcombo)
 
-        self.button = QtGui.QPushButton('Start') # start button
+        self.button = QtGui.QPushButton('Start')  # start button
         buttonlayout.addWidget(self.button)
 
-        layout.addLayout(buttonlayout) # finish layout
+        layout.addLayout(buttonlayout)  # finish layout
         self.plot = pg.PlotWidget()
         layout.addWidget(self.plot)
         self.setLayout(layout)
