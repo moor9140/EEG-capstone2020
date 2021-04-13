@@ -23,5 +23,5 @@ Install the required libraries:
 
 then run the code:
 
-> python GUIandPlot.py
+> python python/gui.py
 
