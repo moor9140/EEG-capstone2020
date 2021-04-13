@@ -18,5 +18,5 @@ void loop() {
   //Serial.print(analogRead(14));
   
   Serial.print("\n");
-  delay(120);
+  //delay(120);
 }
